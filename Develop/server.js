@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const notes = require('./db/db.json')
 
@@ -11,14 +12,17 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static('public'));
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '/public/index.html')));
+app.get('/', (req, res) => res.sendFile('/public/index.html'));
 
 app.get('/notes', (req, res) => 
-  res.status(200).json(notes)
+  res.sendFile(path.join(__dirname, '/public/notes.html'))
 );
 
-app.post('/notes', (req, res) => {
-  console.info(`${req.method} request received to add a review`)
+app.get('/api/notes', (req, res) => {
+  res.status(200).json(notes);
+});
+
+app.post('/api/notes', (req, res) => {
   const { title, text } = req.body;
 
   if (title && text) {
@@ -32,8 +36,11 @@ app.post('/notes', (req, res) => {
     body: newNote,
   }
 
-  console.log(response)
+  notes.push(newNote);
+  fs.writeFileSync('/db/db.json', notes)
+  console.log(notes);
   res.status(201).json(response);
+
   } else {
     res.status(500).json('Error in posting notes');
   }
