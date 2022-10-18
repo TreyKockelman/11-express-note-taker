@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 
-const notes = require('./db/db.json')
+let notes = require('./db/db.json')
 
 const app = express();
 const PORT = 3001;
@@ -23,12 +23,13 @@ app.get('/api/notes', (req, res) => {
 });
 
 app.post('/api/notes', (req, res) => {
-  const { title, text } = req.body;
+  const { title, text, id } = req.body;
 
-  if (title && text) {
+  if (title && text && id) {
     const newNote = {
       title,
       text,
+      id,
     }
 
   const response = {
@@ -37,15 +38,25 @@ app.post('/api/notes', (req, res) => {
   }
 
   notes.push(newNote);
-  fs.writeFileSync('/db/db.json', notes)
-  console.log(notes);
-  res.status(201).json(response);
-
+  fs.writeFileSync(path.join(__dirname, '/db/db.json'), JSON.stringify(notes))
+  res.status(201).json({msg: "Note Added"});
   } else {
     res.status(500).json('Error in posting notes');
   }
-})
+});
+
+app.delete('/api/notes/:id', (req, res)  => {
+  const found = notes.some(notes => notes.id === req.params.id);
+
+  if (found) {
+    notes = notes.filter(notes => notes.id !== req.params.id);
+    res.json(notes);
+    fs.writeFileSync(path.join(__dirname, '/db/db.json'), JSON.stringify(notes))
+  } else {
+    res.status(404).json('Error in deleting notes');
+  }
+});
 
 app.listen(PORT, () =>
-  console.log(`Example app listening at http://localhost:${PORT}`)
+  console.log(`Listening at http://localhost:${PORT}`)
 );
